@@ -1,15 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Dict, Set, Union
+from typing import Dict, Set
 
 from automata.fa.dfa import DFA
 from automata.pda.dpda import DPDA
 from automata.tm.dtm import DTM
 
-from fastapi.responses import StreamingResponse
-
-from typing import Dict, Set, Union, Optional
-from flask_cors import CORS
+from typing import Dict, Set, Optional
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
@@ -22,10 +19,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite todas as origens (ajuste conforme necessário)
+    allow_origins=["*"], 
     allow_credentials=True,
-    allow_methods=["*"],  # Permite todos os métodos HTTP (GET, POST, etc.)
-    allow_headers=["*"],  # Permite todos os headers
+    allow_methods=["*"], 
+    allow_headers=["*"],  
 )
 
 
@@ -46,7 +43,6 @@ class AutomataValidationRequest(BaseModel):
 @app.post("/dfa/validate")
 def validate_dfa(request: AutomataValidationRequest):
     try:
-        # Create DFA
         dfa = DFA(
             states=request.states,
             input_symbols=request.input_symbols,
@@ -55,7 +51,6 @@ def validate_dfa(request: AutomataValidationRequest):
             final_states=request.final_states
         )
         
-        # Validate input
         is_accepted = dfa.accepts_input(request.input_string)
         
         return {
@@ -91,8 +86,7 @@ def validate_dpda(request: AutomataValidationRequest):
             states=request.states,
             input_symbols=request.input_symbols,
             stack_symbols=request.stack_symbols,
-            transitions=convert_transitions(request.transitions),  # Usando a função para conversão
-            initial_state=request.initial_state,
+            transitions=convert_transitions(request.transitions),  
             initial_stack_symbol=request.initial_stack_symbol,
             final_states=request.final_states,
             acceptance_mode=request.acceptance_mode
@@ -116,7 +110,7 @@ def validate_dpda(request: AutomataValidationRequest):
 def convert_dtm_transitions(transitions):
     return {
         state: {
-            symbol: tuple(value)  # Transforma as listas em tuplas
+            symbol: tuple(value)  
             for symbol, value in stack_trans.items()
         }
         for state, stack_trans in transitions.items()
@@ -130,13 +124,12 @@ def validate_dtm(request: AutomataValidationRequest):
             states=request.states,
             input_symbols=request.input_symbols,
             tape_symbols=request.tape_symbols,
-            transitions=convert_dtm_transitions(request.transitions),  # Usando a função para conversão
+            transitions=convert_dtm_transitions(request.transitions), 
             initial_state=request.initial_state,
             blank_symbol=request.blank_symbol,
             final_states=request.final_states
         )
         
-        # Validar a entrada
         is_accepted = dtm.accepts_input(request.input_string)
         
         return {

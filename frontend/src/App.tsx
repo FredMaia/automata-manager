@@ -1,18 +1,16 @@
 import React, { useState } from "react";
 import axios from "axios";
-import "./App.css"; // Importa o arquivo CSS
+import "./App.css"; 
 
 const App: React.FC = () => {
   const [automatonType, setAutomatonType] = useState("dfa");
 
-  // Estados para os inputs gerais
   const [states, setStates] = useState("");
   const [inputSymbols, setInputSymbols] = useState("");
   const [initialState, setInitialState] = useState("");
   const [finalStates, setFinalStates] = useState("");
   const [inputString, setInputString] = useState("");
 
-  // Estado para transições
   const [transitions, setTransitions] = useState<{ [key: string]: { [key: string]: string } }>({});
 
   const handleAddTransition = () => {
