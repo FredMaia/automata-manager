@@ -1,2 +1,5 @@
-fastapi
-automata
+fastapi==0.95.2
+uvicorn==0.22.0
+automata-lib==5.0.0
+graphviz==0.20.1
+flask_cors
