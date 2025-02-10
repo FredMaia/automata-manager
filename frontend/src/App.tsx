@@ -1,19 +1,44 @@
 import React, { useState } from "react";
 import axios from "axios";
-import "./App.css"; 
+import "./App.css";
 
 const App: React.FC = () => {
   const [automatonType, setAutomatonType] = useState("dfa");
 
+  // Common fields
   const [states, setStates] = useState("");
   const [inputSymbols, setInputSymbols] = useState("");
   const [initialState, setInitialState] = useState("");
   const [finalStates, setFinalStates] = useState("");
   const [inputString, setInputString] = useState("");
 
-  const [transitions, setTransitions] = useState<{ [key: string]: { [key: string]: string } }>({});
+  // DPDA specific fields
+  const [stackSymbols, setStackSymbols] = useState("");
+  const [initialStackSymbol, setInitialStackSymbol] = useState("");
+  const [acceptanceMode, setAcceptanceMode] = useState("final_state");
+
+  // DTM specific fields
+  const [tapeSymbols, setTapeSymbols] = useState("");
+  const [blankSymbol, setBlankSymbol] = useState(".");
+
+  const [transitions, setTransitions] = useState<{ [key: string]: any }>({});
+  const [transitionDisplay, setTransitionDisplay] = useState<string[]>([]);
 
   const handleAddTransition = () => {
+    switch (automatonType) {
+      case "dfa":
+        addDFATransition();
+        break;
+      case "dpda":
+        addDPDATransition();
+        break;
+      case "dtm":
+        addDTMTransition();
+        break;
+    }
+  };
+
+  const addDFATransition = () => {
     const state = prompt("Estado atual:");
     const symbol = prompt("Símbolo de entrada:");
     const nextState = prompt("Próximo estado:");
@@ -26,7 +51,66 @@ const App: React.FC = () => {
           [symbol]: nextState,
         },
       }));
+
+      setTransitionDisplay((prev) => [
+        ...prev,
+        `δ(${state}, ${symbol}) = ${nextState}`,
+      ]);
     }
+  };
+
+  const addDPDATransition = () => {
+    const state = prompt("Estado atual:");
+    const symbol = prompt("Símbolo de entrada:");
+    const stackTop = prompt("Símbolo no topo da pilha:");
+    const nextState = prompt("Próximo estado:");
+    const stackReplace = prompt("Símbolos a empilhar (separados por vírgula):");
+
+    if (state && symbol && stackTop && nextState && stackReplace) {
+      setTransitions((prev) => ({
+        ...prev,
+        [state]: {
+          ...(prev[state] || {}),
+          [symbol]: {
+            ...(prev[state]?.[symbol] || {}),
+            [stackTop]: [nextState, stackReplace.split(",")],
+          },
+        },
+      }));
+
+      setTransitionDisplay((prev) => [
+        ...prev,
+        `δ(${state}, ${symbol}, ${stackTop}) = (${nextState}, [${stackReplace}])`,
+      ]);
+    }
+  };
+
+  const addDTMTransition = () => {
+    const state = prompt("Estado atual:");
+    const symbol = prompt("Símbolo na fita:");
+    const nextState = prompt("Próximo estado:");
+    const newSymbol = prompt("Novo símbolo na fita:");
+    const direction = prompt("Direção (L/R):");
+
+    if (state && symbol && nextState && newSymbol && direction) {
+      setTransitions((prev) => ({
+        ...prev,
+        [state]: {
+          ...(prev[state] || {}),
+          [symbol]: [nextState, newSymbol, direction],
+        },
+      }));
+
+      setTransitionDisplay((prev) => [
+        ...prev,
+        `δ(${state}, ${symbol}) = (${nextState}, ${newSymbol}, ${direction})`,
+      ]);
+    }
+  };
+
+  const clearTransitions = () => {
+    setTransitions({});
+    setTransitionDisplay([]);
   };
 
   const handleSubmit = async () => {
@@ -40,20 +124,31 @@ const App: React.FC = () => {
         input_string: inputString.trim(),
       };
 
-      if (automatonType === "dpda") {
-        jsonData["stack_symbols"] = ["0", "1"];
-        jsonData["initial_stack_symbol"] = "0";
-        jsonData["acceptance_mode"] = "final_state";
-      } else if (automatonType === "dtm") {
-        jsonData["tape_symbols"] = ["0", "1", "x", "y", "."];
-        jsonData["blank_symbol"] = ".";
+      // Add type-specific parameters
+      switch (automatonType) {
+        case "dpda":
+          jsonData["stack_symbols"] = stackSymbols
+            .split(",")
+            .map((s) => s.trim());
+          jsonData["initial_stack_symbol"] = initialStackSymbol;
+          jsonData["acceptance_mode"] = acceptanceMode;
+          break;
+        case "dtm":
+          jsonData["tape_symbols"] = tapeSymbols
+            .split(",")
+            .map((s) => s.trim());
+          jsonData["blank_symbol"] = blankSymbol;
+          break;
       }
 
-      const res = await axios.post(`http://127.0.0.1:8000/${automatonType}/validate`, jsonData);
+      const res = await axios.post(
+        `http://127.0.0.1:8000/${automatonType}/validate`,
+        jsonData
+      );
       alert("Resposta:\n" + JSON.stringify(res.data, null, 2));
     } catch (error) {
       alert("Erro ao enviar requisição. Verifique os dados.");
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -64,15 +159,23 @@ const App: React.FC = () => {
 
         <label>
           Tipo de Autômato:
-          <select value={automatonType} onChange={(e) => setAutomatonType(e.target.value)}>
+          <select
+            value={automatonType}
+            onChange={(e) => {
+              setAutomatonType(e.target.value);
+              // Reset transitions when changing automaton type
+              setTransitions({});
+              setTransitionDisplay([]);
+            }}
+          >
             <option value="dfa">DFA</option>
             <option value="dpda">DPDA</option>
             <option value="dtm">DTM</option>
           </select>
         </label>
 
-        <h3>Configuração</h3>
-        
+        <h3>Configuração Básica</h3>
+
         <div className="input-grid">
           <input
             type="text"
@@ -106,11 +209,78 @@ const App: React.FC = () => {
           />
         </div>
 
-        <h3>Transições</h3>
-        
-        <button onClick={handleAddTransition} className="add-transition">Adicionar Transição</button>
+        {/* DPDA Specific Inputs */}
+        {automatonType === "dpda" && (
+          <div className="dpda-specific input-grid">
+            <h3>Configurações DPDA</h3> <br />
+            <input
+              type="text"
+              placeholder="Símbolos de Pilha (ex: 0,1)"
+              value={stackSymbols}
+              onChange={(e) => setStackSymbols(e.target.value)}
+            />
+            <input
+              type="text"
+              placeholder="Símbolo Inicial da Pilha"
+              value={initialStackSymbol}
+              onChange={(e) => setInitialStackSymbol(e.target.value)}
+            />
+            <select
+              value={acceptanceMode}
+              onChange={(e) => setAcceptanceMode(e.target.value)}
+            >
+              <option value="final_state">Estado Final</option>
+              <option value="empty_stack">Pilha Vazia</option>
+            </select>
+          </div>
+        )}
 
-        <button onClick={handleSubmit} className="submit-button">Validar Autômato</button>
+        {/* DTM Specific Inputs */}
+        {automatonType === "dtm" && (
+          <div className="dtm-specific input-grid">
+            <h3>Configurações DTM</h3> <br />
+            <input
+              type="text"
+              placeholder="Símbolos de Fita (ex: 0,1,x,y,.)"
+              value={tapeSymbols}
+              onChange={(e) => setTapeSymbols(e.target.value)}
+            />
+            <input
+              type="text"
+              placeholder="Símbolo em Branco"
+              value={blankSymbol}
+              onChange={(e) => setBlankSymbol(e.target.value)}
+            />
+          </div>
+        )}
+
+        <h3>Transições</h3>
+
+        <button onClick={handleAddTransition} className="add-transition">
+          Adicionar Transição
+        </button>
+
+        <button onClick={clearTransitions} className="clear-transition">
+          Limpar Transições
+        </button>
+
+        {transitionDisplay.length > 0 && (
+          <div className="transitions-list">
+            <h4>Transições Adicionadas:</h4>
+            {transitionDisplay.map((transition, index) => (
+              <div key={index} className="transition-item">
+                {transition}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <br />
+        <br />
+        
+        <button onClick={handleSubmit} className="submit-button">
+          Validar Autômato
+        </button>
       </div>
     </div>
   );

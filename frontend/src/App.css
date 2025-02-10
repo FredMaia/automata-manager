@@ -90,6 +90,20 @@ select {
   cursor: pointer;
 }
 
+.clear-transition {
+  background-color: rgb(236, 74, 74);
+  color: white;
+  border: none;
+  padding: 10px;
+  width: 100%;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.clear-transition:hover {
+  background-color: red;
+}
+
 .submit-button:hover {
   background-color: #388E3C;
 }
