@@ -151,7 +151,6 @@ Entrada para `/dtm/validate`
 ```
 
 Resposta:
-
 ```json
 {
   "input": "01",
