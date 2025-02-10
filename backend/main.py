@@ -13,7 +13,6 @@ app = FastAPI(
     title="DTM API",
     description="API para criar e validar Máquinas de Turing Determinísticas (DTM)",
     version="1.0.0",
-    docs_url="/docs", 
     redoc_url="/redoc" 
 )
 
@@ -78,6 +77,8 @@ def convert_transitions(transitions):
         for state, trans in transitions.items()
     }
 
+
+
 # DPDA = deterministic pushdown automata
 @app.post("/dpda/validate")
 def validate_dpda(request: AutomataValidationRequest):
@@ -115,6 +116,8 @@ def convert_dtm_transitions(transitions):
         }
         for state, stack_trans in transitions.items()
     }
+
+
 
 # DTM = deterministic Turing machine
 @app.post("/dtm/validate")

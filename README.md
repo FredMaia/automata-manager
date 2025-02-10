@@ -48,7 +48,7 @@ Resposta:
 
 ```json
 {
-  "input": "aab",
+  "input": "011",
   "accepted": false,
   "automaton_details": {
     "total_states": 3,
