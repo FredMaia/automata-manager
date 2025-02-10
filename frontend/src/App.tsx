@@ -124,7 +124,6 @@ const App: React.FC = () => {
         input_string: inputString.trim(),
       };
 
-      // Add type-specific parameters
       switch (automatonType) {
         case "dpda":
           jsonData["stack_symbols"] = stackSymbols
@@ -163,7 +162,6 @@ const App: React.FC = () => {
             value={automatonType}
             onChange={(e) => {
               setAutomatonType(e.target.value);
-              // Reset transitions when changing automaton type
               setTransitions({});
               setTransitionDisplay([]);
             }}
