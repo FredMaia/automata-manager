@@ -78,7 +78,6 @@ def convert_transitions(transitions):
     }
 
 
-
 # DPDA = deterministic pushdown automata
 @app.post("/dpda/validate")
 def validate_dpda(request: AutomataValidationRequest):

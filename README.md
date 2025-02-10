@@ -1,6 +1,6 @@
 # API REST para implementar autômatos
 
-## Como configurar e executar o projeto.
+## Como configurar e executar o projeto:
 
 ```
 cd backend
